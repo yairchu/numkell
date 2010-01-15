@@ -7,7 +7,6 @@ module Data.NumKell.Slice
   ) where
 
 import Data.HList (HCons(..), HNil(..))
-import Data.Maybe (fromMaybe)
 
 import Data.NumKell.Funk (HLMaybes, Funk(..))
 
@@ -15,7 +14,7 @@ data SAll = SAll
 data SIdx a = SIdx a
 data SNewAxis = SNewAxis
 data SRange a = SRange
-  { srStart :: Maybe a
+  { srStart :: a
   , srSize :: Maybe a
   }
 
@@ -83,18 +82,14 @@ instance
   sliceFuncs =
     FSliceFuncs sz idx
     where
-      sz (HCons x xs) (HCons (SRange Nothing Nothing) ys) =
-        HCons x (sliceSize tbl xs ys)
       sz (HCons (Just x) xs) (HCons (SRange yStart (Just ySize)) ys)
-        | fromMaybe 0 yStart + ySize > x = error "size too large"
+        | yStart + ySize > x = error "size too large"
         | otherwise = HCons (Just ySize) (sliceSize tbl xs ys)
-      sz (HCons (Just x) xs) (HCons (SRange (Just yStart) Nothing) ys)
+      sz (HCons (Just x) xs) (HCons (SRange yStart Nothing) ys)
         | yStart >= x = error "range starts out of bounds"
         | otherwise = HCons (Just (x - yStart)) (sliceSize tbl xs ys)
       sz _ _ = error "limiting range of a broadcast axis"
-      idx (HCons (SRange Nothing _) xs) (HCons y ys) =
-        HCons y (sliceIndex tbl xs ys)
-      idx (HCons (SRange (Just x) _) xs) (HCons y ys) =
+      idx (HCons (SRange x _) xs) (HCons y ys) =
         HCons (x + y) (sliceIndex tbl xs ys)
       tbl = sliceFuncs
 
