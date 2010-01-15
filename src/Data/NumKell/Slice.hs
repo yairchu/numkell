@@ -36,10 +36,7 @@ slice funk s =
     tbl = sliceFuncs
 
 instance FSlice HNil HNil where
-  sliceFuncs =
-    FSliceFuncs
-    ((const . const) HNil)
-    ((const . const) HNil)
+  sliceFuncs = FSliceFuncs const const
 
 instance FSlice as bs => FSlice (HCons a as) (HCons HNothing bs) where
   sliceFuncs =

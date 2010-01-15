@@ -34,10 +34,7 @@ newAxes funk axes =
     tbl = newAxesFuncs
 
 instance FNewAxes HNil HNil where
-  newAxesFuncs =
-    FNewAxesFuncs
-    ((const . const) HNil)
-    ((const . const) HNil)
+  newAxesFuncs = FNewAxesFuncs const const
 
 instance FNewAxes xs ys => FNewAxes xs (HCons HTrue ys) where
   newAxesFuncs =
