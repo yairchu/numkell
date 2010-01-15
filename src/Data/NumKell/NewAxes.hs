@@ -1,10 +1,10 @@
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables, TypeFamilies #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TypeFamilies #-}
 
 module Data.NumKell.NewAxes
   ( FNewAxesRes, FNewAxes
   ) where
 
-import Data.HList (HCons(..), HFalse(..), HNil(..), HTrue(..), hTail)
+import Data.HList (HCons(..), HFalse(..), HNil(..), HTrue(..))
 
 import Data.NumKell.Funk (HLMaybes, Funk(..))
 
@@ -15,34 +15,46 @@ type instance FNewAxesRes xs (HCons HTrue ys)
 type instance FNewAxesRes (HCons x xs) (HCons HFalse ys)
   = HCons x (FNewAxesRes xs ys)
 
-class FNewAxes i d where
-  -- dummy (i ->)
-  newAxesSize :: i -> HLMaybes i -> d -> HLMaybes (FNewAxesRes i d)
-  newAxesIdx :: d -> FNewAxesRes i d -> i
-
-newAxes
-  :: forall i d e. FNewAxes i d
-  => Funk i e -> d -> Funk (FNewAxesRes i d) e
-newAxes funk axes =
-  Funk
-  { fSize = newAxesSize (undefined :: i) (fSize funk) axes
-  , fIndex = fIndex funk . newAxesIdx axes
+data FNewAxesFuncs i d =
+  FNewAxesFuncs
+  { newAxesSize :: HLMaybes i -> d -> HLMaybes (FNewAxesRes i d)
+  , newAxesIdx :: d -> FNewAxesRes i d -> i
   }
 
+class FNewAxes i d where
+  newAxesFuncs :: FNewAxesFuncs i d
+
+newAxes :: FNewAxes i d => Funk i e -> d -> Funk (FNewAxesRes i d) e
+newAxes funk axes =
+  Funk
+  { fSize = newAxesSize tbl (fSize funk) axes
+  , fIndex = fIndex funk . newAxesIdx tbl axes
+  }
+  where
+    tbl = newAxesFuncs
+
 instance FNewAxes HNil HNil where
-  newAxesSize _ _ _ = HNil
-  newAxesIdx _ _ = HNil
+  newAxesFuncs =
+    FNewAxesFuncs
+    ((const . const) HNil)
+    ((const . const) HNil)
 
 instance FNewAxes xs ys => FNewAxes xs (HCons HTrue ys) where
-  newAxesSize dummy xs (HCons _ ys) =
-    HCons Nothing (newAxesSize dummy xs ys)
-  newAxesIdx (HCons _ xs) (HCons _ ys) =
-    newAxesIdx xs ys
+  newAxesFuncs =
+    FNewAxesFuncs sz idx
+    where
+      sz xs (HCons _ ys) = HCons Nothing (newAxesSize tbl xs ys)
+      idx (HCons _ xs) (HCons _ ys) = newAxesIdx tbl xs ys
+      tbl = newAxesFuncs
 
 instance FNewAxes xs ys
   => FNewAxes (HCons x xs) (HCons HFalse ys) where
-  newAxesSize dummy (HCons x xs) (HCons _ ys) =
-    HCons x (newAxesSize (hTail dummy) xs ys)
-  newAxesIdx (HCons _ xs) (HCons y ys) =
-    HCons y (newAxesIdx xs ys)
+  newAxesFuncs =
+    FNewAxesFuncs sz idx
+    where
+      sz (HCons x xs) (HCons _ ys) =
+        HCons x (newAxesSize tbl xs ys)
+      idx (HCons _ xs) (HCons y ys) =
+        HCons y (newAxesIdx tbl xs ys)
+      tbl = newAxesFuncs
 
