@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, ScopedTypeVariables, TypeFamilies, TypeOperators #-}
+{-# LANGUAGE ScopedTypeVariables, TypeFamilies #-}
 
 module Data.NumKell.Funk where
 
@@ -12,7 +12,7 @@ import Data.HList
 -- (Maybe a :*: Maybe b :*: ...)
 type family HLMaybes i
 type instance HLMaybes HNil = HNil
-type instance HLMaybes (a :*: as) = Maybe a :*: HLMaybes as
+type instance HLMaybes (HCons a as) = HCons (Maybe a) (HLMaybes as)
 
 data Funk i e = Funk
   { fSize :: HLMaybes i
@@ -45,7 +45,7 @@ instance (Eq a, FunkIdx as)
 instance FunkIdx i => Applicative (Funk i) where
   pure val =
     Funk
-    { fSize = funkBcastSize
+    { fSize = funkBcastSize (undefined :: i)
     , fIndex = const val
     }
   x <*> y =
