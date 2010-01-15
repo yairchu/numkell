@@ -57,5 +57,5 @@ instance FunkIdx i => Applicative (Funk i) where
     , fIndex = f
     }
     where
-      f idx = (fIndex x idx) (fIndex y idx)
+      f idx = fIndex x idx $ fIndex y idx
 

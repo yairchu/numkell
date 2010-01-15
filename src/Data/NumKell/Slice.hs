@@ -42,6 +42,6 @@ instance FSlice as bs => FSlice (HCons a as) (HCons HNothing bs) where
 instance FSlice as bs => FSlice (HCons a as) (HCons (HJust a) bs) where
   sliceSize dummy (HCons _ xs) (HCons _ ys) =
     sliceSize (hTail dummy) xs ys
-  sliceIndex (HCons (HJust x) xs) ys =
-    HCons x (sliceIndex xs ys)
+  sliceIndex (HCons (HJust x) xs) =
+    HCons x . sliceIndex xs
 

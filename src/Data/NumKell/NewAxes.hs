@@ -18,7 +18,7 @@ type instance FNewAxesRes (HCons x xs) (HCons HFalse ys)
 class FNewAxes i d where
   -- dummy (i ->)
   newAxesSize :: i -> HLMaybes i -> d -> HLMaybes (FNewAxesRes i d)
-  newAxesIdx :: FNewAxesRes i d -> d -> i
+  newAxesIdx :: d -> FNewAxesRes i d -> i
 
 newAxes
   :: forall i d e. FNewAxes i d
@@ -26,7 +26,7 @@ newAxes
 newAxes funk axes =
   Funk
   { fSize = newAxesSize (undefined :: i) (fSize funk) axes
-  , fIndex = fIndex funk . (`newAxesIdx` axes)
+  , fIndex = fIndex funk . newAxesIdx axes
   }
 
 instance FNewAxes HNil HNil where
@@ -43,6 +43,6 @@ instance FNewAxes xs ys
   => FNewAxes (HCons x xs) (HCons HFalse ys) where
   newAxesSize dummy (HCons x xs) (HCons _ ys) =
     HCons x (newAxesSize (hTail dummy) xs ys)
-  newAxesIdx (HCons x xs) (HCons _ ys) =
-    HCons x (newAxesIdx xs ys)
+  newAxesIdx (HCons _ xs) (HCons y ys) =
+    HCons y (newAxesIdx xs ys)
 
