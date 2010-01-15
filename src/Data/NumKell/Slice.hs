@@ -6,7 +6,7 @@ module Data.NumKell.Slice
 
 import Data.HList (HCons(..), HJust(..), HNil(..), HNothing(..), hTail)
 
-import Data.NumKell.Funk (HLMaybes(..), Funk(..))
+import Data.NumKell.Funk (HLMaybes, Funk(..))
 
 type family FSliceRes i s
 type instance FSliceRes HNil HNil = HNil
@@ -44,5 +44,4 @@ instance FSlice as bs => FSlice (HCons a as) (HCons (HJust a) bs) where
     sliceSize (hTail dummy) xs ys
   sliceIndex (HCons (HJust x) xs) ys =
     HCons x (sliceIndex xs ys)
-
 

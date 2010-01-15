@@ -1,10 +1,13 @@
 {-# LANGUAGE ScopedTypeVariables, TypeFamilies #-}
 
-module Data.NumKell.Funk where
+module Data.NumKell.Funk
+  ( HLMaybes, Funk(..)
+  , (!)
+  ) where
 
 import Control.Applicative (Applicative(..), liftA2)
 import Data.Generics.Aliases (orElse)
-import Data.HList
+import Data.HList (HCons(..), HNil(..), hTail)
 
 -- | HLMaybes transforms an HList
 -- (a :*: b :*: ...)
