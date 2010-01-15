@@ -1,21 +1,27 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TypeFamilies #-}
 
 module Data.NumKell.Slice
-  ( FSliceRes, FSlice, slice
+  ( FSliceRes, FSlice
+  , SAll(..), SIdx(..), SNewAxis(..)
+  , slice
   ) where
 
-import Data.HList (HCons(..), HJust(..), HNil(..), HNothing(..), hTail)
+import Data.HList (HCons(..), HNil(..))
 
 import Data.NumKell.Funk (HLMaybes, Funk(..))
 
+data SAll = SAll
+data SIdx a = SIdx a
+data SNewAxis = SNewAxis
+
 type family FSliceRes i s
 type instance FSliceRes HNil HNil = HNil
-type instance
-  FSliceRes (HCons a as) (HCons HNothing bs)
+type instance FSliceRes (HCons a as) (HCons SAll bs)
   = HCons a (FSliceRes as bs)
-type instance
-  FSliceRes (HCons a as) (HCons (HJust a) bs)
+type instance FSliceRes (HCons a as) (HCons (SIdx a) bs)
   = FSliceRes as bs
+type instance FSliceRes xs (HCons SNewAxis ys)
+  = HCons Int (FSliceRes xs ys)
 
 data FSliceFuncs i s =
   FSliceFuncs
@@ -38,21 +44,29 @@ slice funk s =
 instance FSlice HNil HNil where
   sliceFuncs = FSliceFuncs const const
 
-instance FSlice as bs => FSlice (HCons a as) (HCons HNothing bs) where
+instance FSlice as bs => FSlice (HCons a as) (HCons SAll bs) where
   sliceFuncs =
     FSliceFuncs sz idx
     where
-      sz (HCons x xs) (HCons HNothing ys) =
+      sz (HCons x xs) (HCons _ ys) =
         HCons x (sliceSize tbl xs ys)
-      idx (HCons HNothing xs) (HCons y ys) =
+      idx (HCons _ xs) (HCons y ys) =
         HCons y (sliceIndex tbl xs ys)
       tbl = sliceFuncs
 
-instance FSlice as bs => FSlice (HCons a as) (HCons (HJust a) bs) where
+instance FSlice as bs => FSlice (HCons a as) (HCons (SIdx a) bs) where
   sliceFuncs =
     FSliceFuncs sz idx
     where
       sz (HCons _ xs) (HCons _ ys) = sliceSize tbl xs ys
-      idx (HCons (HJust x) xs) = HCons x . sliceIndex tbl xs
+      idx (HCons (SIdx x) xs) = HCons x . sliceIndex tbl xs
+      tbl = sliceFuncs
+
+instance FSlice xs ys => FSlice xs (HCons SNewAxis ys) where
+  sliceFuncs =
+    FSliceFuncs sz idx
+    where
+      sz xs (HCons _ ys) = HCons Nothing (sliceSize tbl xs ys)
+      idx (HCons _ xs) (HCons _ ys) = sliceIndex tbl xs ys
       tbl = sliceFuncs
 
