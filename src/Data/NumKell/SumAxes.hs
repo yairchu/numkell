@@ -1,11 +1,14 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TypeFamilies #-}
 
-module Data.NumKell.SumAxes where
+module Data.NumKell.SumAxes
+  ( FFlatten(..)
+  , flattenAxes, sumAxes
+  ) where
 
 import Control.Applicative ((<$>), (<*>))
 import Data.HList (HCons(..), HJust(..), HNil(..))
 
-import Data.NumKell.Funk
+import Data.NumKell.Funk (HCatMaybes, Funk(..))
 
 -- I would happilly use HFalse and HTrue from HList
 -- but can't use their constructors
