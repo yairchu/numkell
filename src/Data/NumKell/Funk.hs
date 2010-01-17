@@ -14,7 +14,7 @@
 module Data.NumKell.Funk
   ( FLift2Shape, HCatMaybes
   , Funk(..)
-  , (!), (<**>), liftF2
+  , (!), (<~*>), liftF2
   ) where
 
 import Data.HList (HCons(..), HJust(..), HNil(..), HNothing(..))
@@ -69,10 +69,10 @@ liftF2 op fa fb =
       where
         (idxa, idxb) = fLiftIndices tbl idx
 
--- (<**>) is similar to Applicative's op (<*>)
-(<**>) :: FLift2 ia ib
+-- (<~*>) is similar to Applicative's op (<*>)
+(<~*>) :: FLift2 ia ib
   => Funk ia (s -> d) -> Funk ib s -> Funk (FLift2Shape ia ib) d
-(<**>) = liftF2 ($)
+(<~*>) = liftF2 ($)
 
 instance FLift2 HNil HNil where
   type FLift2Shape HNil HNil = HNil

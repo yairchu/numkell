@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TypeFamilies #-}
 
 module Data.NumKell.SumAxes
-  ( FFlatten(..)
+  ( FFlatten(..), TFalse(..), TTrue(..)
   , flattenAxes, sumAxes
   ) where
 
