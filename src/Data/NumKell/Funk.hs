@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, TypeFamilies #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TypeFamilies #-}
 
 -- | The difference between a
 -- (Funk (HJust a :*: HJust b :*: HNil) c)
@@ -83,4 +83,54 @@ liftF2 op fa fb =
 (<**>) :: FLift2 ia ib
   => Funk ia (s -> d) -> Funk ib s -> Funk (FLift2Shape ia ib) d
 (<**>) = liftF2 ($)
+
+instance FLift2 HNil HNil where
+  fLift2Funcs = FLift2Funcs const (const (HNil, HNil))
+
+instance FLift2 as bs
+  => FLift2 (HCons HNothing as) (HCons HNothing bs) where
+  fLift2Funcs =
+    FLift2Funcs sz idx
+    where
+      sz = fLiftSize tbl
+      idx = fLiftIndices tbl
+      tbl = fLift2Funcs
+
+instance FLift2 as bs
+  => FLift2 (HCons HNothing as) (HCons (HJust b) bs) where
+  fLift2Funcs =
+    FLift2Funcs sz idx
+    where
+      sz (HCons _ xs) (HCons y ys) = HCons y (fLiftSize tbl xs ys)
+      idx (HCons x xs) =
+        (ia, HCons x ib)
+        where
+          (ia, ib) = fLiftIndices tbl xs
+      tbl = fLift2Funcs
+
+instance FLift2 as bs
+  => FLift2 (HCons (HJust a) as) (HCons HNothing bs) where
+  fLift2Funcs =
+    FLift2Funcs sz idx
+    where
+      sz (HCons x xs) (HCons _ ys) = HCons x (fLiftSize tbl xs ys)
+      idx (HCons x xs) =
+        (HCons x ia, ib)
+        where
+          (ia, ib) = fLiftIndices tbl xs
+      tbl = fLift2Funcs
+
+instance (FLift2 as bs, Eq a)
+  => FLift2 (HCons (HJust a) as) (HCons (HJust a) bs) where
+  fLift2Funcs =
+    FLift2Funcs sz idx
+    where
+      sz (HCons (HJust x) xs) (HCons (HJust y) ys)
+        | x == y = HCons (HJust x) (fLiftSize tbl xs ys)
+        | otherwise = error "shape mismatch"
+      idx (HCons x xs) =
+        (HCons x ia, HCons x ib)
+        where
+          (ia, ib) = fLiftIndices tbl xs
+      tbl = fLift2Funcs
 
