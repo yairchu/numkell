@@ -1,0 +1,23 @@
+Name:                numkell
+Version:             0.1
+Category:            Data
+License:             BSD3
+License-file:        LICENSE
+Author:              Yair Chuchem
+Maintainer:          yairchu@gmail.com
+Cabal-Version:       >= 1.2
+Stability:           experiemental
+Build-type:          Simple
+
+Library
+  hs-Source-Dirs:      src
+  Extensions:
+  Build-Depends:       base >= 3 && < 5, HList, array
+  Exposed-modules:     Data.NumKell
+                       Data.NumKell.Funk
+                       Data.NumKell.Memo
+                       Data.NumKell.Show
+                       Data.NumKell.Slice
+                       Data.NumKell.SumAxes
+  ghc-options:         -O2 -Wall
+
