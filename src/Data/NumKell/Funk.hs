@@ -30,17 +30,6 @@ type instance HCatMaybes (HCons HNothing as)
 type instance HCatMaybes (HCons (HJust a) as)
   = HCons a (HCatMaybes as)
 
-type family FLift2Shape a b
-type instance FLift2Shape HNil HNil = HNil
-type instance FLift2Shape (HCons HNothing as) (HCons HNothing bs)
-  = HCons HNothing (FLift2Shape as bs)
-type instance FLift2Shape (HCons HNothing as) (HCons (HJust b) bs)
-  = HCons (HJust b) (FLift2Shape as bs)
-type instance FLift2Shape (HCons (HJust a) as) (HCons HNothing bs)
-  = HCons (HJust a) (FLift2Shape as bs)
-type instance FLift2Shape (HCons (HJust a) as) (HCons (HJust a) bs)
-  = HCons (HJust a) (FLift2Shape as bs)
-
 data Funk i e = Funk
   { fSize :: i
   -- fIndex similar to []'s genericIndex
@@ -63,6 +52,7 @@ data FLift2Funcs ia ib =
   }
 
 class FLift2 ia ib where
+  type FLift2Shape ia ib
   fLift2Funcs :: FLift2Funcs ia ib
 
 liftF2 :: FLift2 ia ib
@@ -85,10 +75,13 @@ liftF2 op fa fb =
 (<**>) = liftF2 ($)
 
 instance FLift2 HNil HNil where
+  type FLift2Shape HNil HNil = HNil
   fLift2Funcs = FLift2Funcs const (const (HNil, HNil))
 
 instance FLift2 as bs
   => FLift2 (HCons HNothing as) (HCons HNothing bs) where
+  type FLift2Shape (HCons HNothing as) (HCons HNothing bs)
+    = HCons HNothing (FLift2Shape as bs)
   fLift2Funcs =
     FLift2Funcs sz idx
     where
@@ -98,6 +91,8 @@ instance FLift2 as bs
 
 instance FLift2 as bs
   => FLift2 (HCons HNothing as) (HCons (HJust b) bs) where
+  type FLift2Shape (HCons HNothing as) (HCons (HJust b) bs)
+    = HCons (HJust b) (FLift2Shape as bs)
   fLift2Funcs =
     FLift2Funcs sz idx
     where
@@ -110,6 +105,8 @@ instance FLift2 as bs
 
 instance FLift2 as bs
   => FLift2 (HCons (HJust a) as) (HCons HNothing bs) where
+  type FLift2Shape (HCons (HJust a) as) (HCons HNothing bs)
+    = HCons (HJust a) (FLift2Shape as bs)
   fLift2Funcs =
     FLift2Funcs sz idx
     where
@@ -122,6 +119,8 @@ instance FLift2 as bs
 
 instance (FLift2 as bs, Eq a)
   => FLift2 (HCons (HJust a) as) (HCons (HJust a) bs) where
+  type FLift2Shape (HCons (HJust a) as) (HCons (HJust a) bs)
+    = HCons (HJust a) (FLift2Shape as bs)
   fLift2Funcs =
     FLift2Funcs sz idx
     where
