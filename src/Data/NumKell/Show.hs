@@ -43,5 +43,5 @@ instance (Typeable ia, Typeable ib, Integral ia, Integral ib, Show e)
       cell _ Hole = ".."
       cell HeadA (Vals i) = show (fromIntegral i :: Int)
       cell (Vals i) HeadA = show (fromIntegral i :: Int)
-      cell (Vals i) (Vals j) = show (arr ! (HCons j (HCons i HNil)))
+      cell (Vals i) (Vals j) = show (arr ! HCons j (HCons i HNil))
 
