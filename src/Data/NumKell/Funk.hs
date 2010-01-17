@@ -1,61 +1,75 @@
-{-# LANGUAGE ScopedTypeVariables, TypeFamilies #-}
+{-# LANGUAGE MultiParamTypeClasses, TypeFamilies #-}
 
 module Data.NumKell.Funk
-  ( HLMaybes, Funk(..)
-  , (!)
+  ( FLift2Shape, HCatMaybes
+  , Funk(..)
+  , (!), (<**>), liftF2
   ) where
 
-import Control.Applicative (Applicative(..), liftA2)
-import Data.Generics.Aliases (orElse)
-import Data.HList (HCons(..), HNil(..), hTail)
+import Data.HList (HCons(..), HJust(..), HNil(..), HNothing(..))
 
--- | HLMaybes transforms an HList
+-- | HCatMaybes transforms an HList
+-- (HJust a :*: HNothing :*: HJust b :*: ...)
+-- to an HList
 -- (a :*: b :*: ...)
--- to a
--- (Maybe a :*: Maybe b :*: ...)
-type family HLMaybes i
-type instance HLMaybes HNil = HNil
-type instance HLMaybes (HCons a as) = HCons (Maybe a) (HLMaybes as)
+type family HCatMaybes i
+type instance HCatMaybes HNil = HNil
+type instance HCatMaybes (HCons HNothing as)
+  = HCatMaybes as
+type instance HCatMaybes (HCons (HJust a) as)
+  = HCons a (HCatMaybes as)
+
+type family FLift2Shape a b
+type instance FLift2Shape HNil HNil = HNil
+type instance FLift2Shape (HCons HNothing as) (HCons HNothing bs)
+  = HCons HNothing (FLift2Shape as bs)
+type instance FLift2Shape (HCons HNothing as) (HCons (HJust b) bs)
+  = HCons (HJust b) (FLift2Shape as bs)
+type instance FLift2Shape (HCons (HJust a) as) (HCons HNothing bs)
+  = HCons (HJust a) (FLift2Shape as bs)
+type instance FLift2Shape (HCons (HJust a) as) (HCons (HJust a) bs)
+  = HCons (HJust a) (FLift2Shape as bs)
 
 data Funk i e = Funk
-  { fSize :: HLMaybes i
-  , fIndex :: i -> e -- named after []'s genericIndex
+  { fSize :: i
+  -- fIndex similar to []'s genericIndex
+  , fIndex :: HCatMaybes i -> e
   }
 
-(!) :: Funk i e -> i -> e
+(!) :: Funk i e -> HCatMaybes i -> e
 (!) = fIndex
 
 instance Functor (Funk i) where
   fmap f a = a { fIndex = fmap f (fIndex a) }
 
-class FunkIdx i where
-  -- dummy (i ->)
-  funkMergeSizes :: i -> HLMaybes i -> HLMaybes i -> HLMaybes i
-  -- dummy (i ->)
-  funkBcastSize :: i -> HLMaybes i
+-- Funk is not a real Applicative since it doesn't have a "pure" op
 
-instance FunkIdx HNil where
-  funkMergeSizes _ _ _ = HNil
-  funkBcastSize _ = HNil
+data FLift2Funcs ia ib =
+  FLift2Funcs
+  { fLiftSize :: ia -> ib -> FLift2Shape ia ib
+  , fLiftIndices
+    :: HCatMaybes (FLift2Shape ia ib) -> (HCatMaybes ia, HCatMaybes ib)
+  }
 
-instance (Eq a, FunkIdx as)
-  => FunkIdx (HCons a as) where
-  funkMergeSizes dummy (HCons x xs) (HCons y ys)
-    | Just False == liftA2 (==) x y = error "Funk shapes mismatch"
-    | otherwise = HCons (orElse x y) (funkMergeSizes (hTail dummy) xs ys)
-  funkBcastSize = HCons Nothing . funkBcastSize . hTail
+class FLift2 ia ib where
+  fLift2Funcs :: FLift2Funcs ia ib
 
-instance FunkIdx i => Applicative (Funk i) where
-  pure val =
-    Funk
-    { fSize = funkBcastSize (undefined :: i)
-    , fIndex = const val
-    }
-  x <*> y =
-    Funk
-    { fSize = funkMergeSizes (undefined :: i) (fSize x) (fSize y)
-    , fIndex = f
-    }
-    where
-      f idx = fIndex x idx $ fIndex y idx
+liftF2 :: FLift2 ia ib
+  => (a -> b -> c) -> Funk ia a -> Funk ib b -> Funk (FLift2Shape ia ib) c
+liftF2 op fa fb =
+  Funk
+  { fSize = fLiftSize tbl (fSize fa) (fSize fb)
+  , fIndex = getIdx
+  }
+  where
+    tbl = fLift2Funcs
+    getIdx idx =
+      op (fIndex fa idxa) (fIndex fb idxb)
+      where
+        (idxa, idxb) = fLiftIndices tbl idx
+
+-- (<**>) is similar to Applicative's op (<*>)
+(<**>) :: FLift2 ia ib
+  => Funk ia (s -> d) -> Funk ib s -> Funk (FLift2Shape ia ib) d
+(<**>) = liftF2 ($)
 
