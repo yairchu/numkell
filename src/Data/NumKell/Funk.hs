@@ -1,5 +1,16 @@
 {-# LANGUAGE MultiParamTypeClasses, TypeFamilies #-}
 
+-- | The difference between a
+-- (Funk (HJust a :*: HJust b :*: HNil) c)
+-- and a normal function
+-- (a -> b -> c)
+-- is that the Funk also has:
+-- * A size
+-- * Convinient memoizing
+-- * Convinient slicing operations
+-- * Convinient summing operations
+-- * Can combine with other Funks with broadcasted axes
+
 module Data.NumKell.Funk
   ( FLift2Shape, HCatMaybes
   , Funk(..)
