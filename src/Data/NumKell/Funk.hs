@@ -69,6 +69,7 @@ liftF2 op fa fb =
       where
         (idxa, idxb) = fLiftIndices tbl idx
 
+infixl 4 <~*>
 -- (<~*>) is similar to Applicative's op (<*>)
 (<~*>) :: FLift2 ia ib
   => Funk ia (s -> d) -> Funk ib s -> Funk (FLift2Shape ia ib) d

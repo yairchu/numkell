@@ -3,7 +3,7 @@
 module Data.NumKell.Slice
   ( FSliceRes, FSlice
   , SAll(..), SIdx(..), SNewAxis(..), SRange(..)
-  , slice
+  , (!/), slice
   ) where
 
 import Data.HList (HCons(..), HJust(..), HNil(..), HNothing(..))
@@ -49,6 +49,9 @@ slice funk s =
   }
   where
     tbl = sliceFuncs
+
+(!/) :: FSlice i s => Funk i e -> s -> Funk (FSliceRes i s) e
+(!/) = slice
 
 instance FSlice HNil HNil where
   sliceFuncs = FSliceFuncs const const
