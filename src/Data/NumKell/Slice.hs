@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TypeFamilies #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, TypeFamilies #-}
 
 module Data.NumKell.Slice
   ( FSliceRes, FSlice
@@ -23,6 +23,8 @@ data SNewAxis = SNewAxis
 
 type family FSliceRes i s
 type instance FSliceRes HNil HNil = HNil
+type instance FSliceRes (HCons a as) HNil
+  = HCons a (FSliceRes as HNil)
 type instance FSliceRes (HCons a as) (HCons SAll bs)
   = HCons a (FSliceRes as bs)
 type instance FSliceRes (HCons (HJust a) as) (HCons (SRange a) bs)
@@ -56,6 +58,15 @@ slice funk s =
 instance FSlice HNil HNil where
   sliceFuncs = FSliceFuncs const const
 
+instance FSlice as HNil => FSlice (HCons HNothing as) HNil where
+  sliceFuncs =
+    FSliceFuncs sz idx
+    where
+      sz (HCons HNothing xs) HNil =
+        HCons HNothing (sliceSize tbl xs HNil)
+      idx = sliceIndex tbl
+      tbl = sliceFuncs
+
 instance FSlice as bs => FSlice (HCons HNothing as) (HCons SAll bs) where
   sliceFuncs =
     FSliceFuncs sz idx
@@ -63,6 +74,16 @@ instance FSlice as bs => FSlice (HCons HNothing as) (HCons SAll bs) where
       sz (HCons HNothing xs) (HCons SAll ys) =
         HCons HNothing (sliceSize tbl xs ys)
       idx (HCons SAll xs) = sliceIndex tbl xs
+      tbl = sliceFuncs
+
+instance FSlice as HNil => FSlice (HCons (HJust a) as) HNil where
+  sliceFuncs =
+    FSliceFuncs sz idx
+    where
+      sz (HCons (HJust x) xs) HNil =
+        HCons (HJust x) (sliceSize tbl xs HNil)
+      idx HNil (HCons y ys) =
+        HCons y (sliceIndex tbl HNil ys)
       tbl = sliceFuncs
 
 instance FSlice as bs => FSlice (HCons (HJust a) as) (HCons SAll bs) where
