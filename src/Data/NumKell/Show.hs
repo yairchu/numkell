@@ -30,7 +30,10 @@ fmtTable table =
     maxLen = 8
     proc str
       | length str <= maxLen = str
+      | elem 'e' str = take (maxLen - length postE) preE ++ postE
       | otherwise = take (maxLen-2) str ++ ".."
+      where
+        (preE, postE) = break (== 'e') str
     colSizes = map (maximum . map length) . transpose $ procTable
     padCell toSize str = replicate (toSize - length str) ' ' ++ str
 
@@ -67,6 +70,7 @@ instance (Typeable ia, Integral ia, Show e)
       cell HeadA HeadA = shortType s ++ ":"
       cell (Vals i) HeadA = show (fromIntegral i :: Int)
       cell (Vals i) (Vals ()) = show (arr ! HCons i HNil)
+      cell Hole _ = ".."
       cell _ _ = "Value:"
 
 -- show for 2D arrays
