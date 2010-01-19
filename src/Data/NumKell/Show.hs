@@ -24,9 +24,14 @@ instance (HLength i dim, ShowFunk dim (Funk i e)) => Show (Funk i e) where
 
 fmtTable :: [[String]] -> String
 fmtTable table =
-  unlines . map (unwords . zipWith padCell colSizes) $ table
+  unlines . map (unwords . zipWith padCell colSizes) $ procTable
   where
-    colSizes = map (maximum . map length) . transpose $ table
+    procTable = map (map proc) table
+    maxLen = 8
+    proc str
+      | length str <= maxLen = str
+      | otherwise = take (maxLen-2) str ++ ".."
+    colSizes = map (maximum . map length) . transpose $ procTable
     padCell toSize str = replicate (toSize - length str) ' ' ++ str
 
 data TableRow i = HeadA | HeadB | Vals i | Hole
@@ -45,8 +50,12 @@ axisIdxs x
 shortType :: Typeable t => t -> String
 shortType = reverse . takeWhile (/= '.') . reverse . show . typeOf
 
--- show for 1D arrays
+-- show for 0D array
+instance Show e => ShowFunk HZero (Funk HNil e) where
+  showFunk _ arr =
+    "(Funk HNil " ++ show (arr ! HNil) ++ ")"
 
+-- show for 1D arrays
 instance (Typeable ia, Integral ia, Show e)
   => ShowFunk (HSucc HZero) (Funk (HCons (HJust ia) HNil) e) where
   showFunk _ arr =
