@@ -5,8 +5,8 @@ module Data.NumKell.SumAxes
   , flattenAxes, sumAxes
   ) where
 
-import Control.Applicative ((<$>), (<*>))
 import Data.HList (HCons(..), HJust(..), HNil(..))
+import Data.List (foldl')
 
 import Data.NumKell.Funk (HCatMaybes, Funk(..))
 
@@ -29,7 +29,11 @@ flattenAxes funk mask =
   }
 
 sumAxes :: (FFlatten i s, Num e) => Funk i e -> s -> Funk (FFlattenRes i s) e
-sumAxes funk = fmap sum . flattenAxes funk
+sumAxes funk =
+  fmap sum' . flattenAxes funk
+  where
+    -- seems like sum isn't strict..
+    sum' = foldl' (+) 0
 
 instance FFlatten HNil HNil where
   type FFlattenRes HNil HNil = HNil
@@ -51,6 +55,8 @@ instance (FFlatten as bs, Integral a)
     = FFlattenRes as bs
   fFlattenSize (HCons _ xs) (HCons TTrue ys) =
     fFlattenSize xs ys
-  fFlattenIdxs (HCons (HJust s) ss) (HCons TTrue xs) ys =
-    HCons <$> [0 .. s-1] <*> fFlattenIdxs ss xs ys
+  fFlattenIdxs (HCons (HJust s) ss) (HCons TTrue xs) ys = do
+    left <- [0 .. s - 1]
+    right <- fFlattenIdxs ss xs ys
+    return $ HCons left right
 
