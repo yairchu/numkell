@@ -13,7 +13,7 @@ import Data.HList
 import Data.List (transpose)
 import Data.Typeable (Typeable(..))
 
-import Data.NumKell.Funk (Funk(..), (!))
+import Data.NumKell.Funk (Funk(..), FunkFuncC(..))
 
 class ShowFunk dim funk where
   -- dummy (dim ->)
@@ -56,7 +56,7 @@ shortType = reverse . takeWhile (/= '.') . reverse . show . typeOf
 -- show for 0D array
 instance Show e => ShowFunk HZero (Funk HNil e) where
   showFunk _ arr =
-    "(Funk HNil " ++ show (arr ! HNil) ++ ")"
+    "(Funk HNil " ++ show (fVal arr) ++ ")"
 
 -- show for 1D arrays
 instance (Typeable ia, Integral ia, Show e)
@@ -69,7 +69,7 @@ instance (Typeable ia, Integral ia, Show e)
       HCons (HJust s) HNil = fSize arr
       cell HeadA HeadA = shortType s ++ ":"
       cell (Vals i) HeadA = show (fromIntegral i :: Int)
-      cell (Vals i) (Vals ()) = show (arr ! HCons i HNil)
+      cell (Vals i) (Vals ()) = show (fVal arr i)
       cell Hole _ = ".."
       cell _ _ = "Value:"
 
@@ -93,7 +93,7 @@ instance (Typeable ia, Typeable ib, Integral ia, Integral ib, Show e)
       cell _ Hole = ".."
       cell HeadA (Vals i) = show (fromIntegral i :: Int)
       cell (Vals i) HeadA = show (fromIntegral i :: Int)
-      cell (Vals i) (Vals j) = show (arr ! HCons j (HCons i HNil))
+      cell (Vals i) (Vals j) = show (fVal arr j i)
 
 -- 3D and upwards we just show size/type
 instance (Show i, Typeable e)

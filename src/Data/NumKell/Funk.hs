@@ -13,8 +13,9 @@
 
 module Data.NumKell.Funk
   ( FLift2Shape, HCatMaybes
+  , FunkFuncC(..)
   , Funk(..)
-  , (!), (<~*>), funkSize, hCatMaybes, liftF2
+  , (<~*>), funkSize, hCatMaybes, liftF2
   ) where
 
 import Data.HList (HCons(..), HJust(..), HNil(..), HNothing(..))
@@ -45,11 +46,30 @@ data Funk i e = Funk
   , fIndex :: HCatMaybes i -> e
   }
 
+class FunkFuncC i e where
+  type FunkFunc i e
+  fVal :: Funk i e -> FunkFunc i e
+
+instance FunkFuncC HNil a where
+  type FunkFunc HNil a = a
+  fVal = (`fIndex` HNil)
+
+instance FunkFuncC as b
+  => FunkFuncC (HCons HNothing as) b where
+  type FunkFunc (HCons HNothing as) b = FunkFunc as b
+  fVal (Funk (HCons HNothing xs) fidx) =
+    fVal (Funk xs fidx)
+
+instance FunkFuncC as b
+  => FunkFuncC (HCons (HJust a) as) b where
+  type FunkFunc (HCons (HJust a) as) b = a -> FunkFunc as b
+  fVal (Funk (HCons (HJust _) xs) f) y =
+    fVal (Funk xs g)
+    where
+      g ys = f (HCons y ys)
+
 funkSize :: HCatMaybesC i => Funk i e -> HCatMaybes i
 funkSize = hCatMaybes . fSize
-
-(!) :: Funk i e -> HCatMaybes i -> e
-(!) = fIndex
 
 instance Functor (Funk i) where
   fmap f a = a { fIndex = fmap f (fIndex a) }
