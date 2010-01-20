@@ -8,7 +8,8 @@ module Data.NumKell.SumAxes
 import Data.HList (HCons(..), HJust(..), HNil(..))
 import Data.List (foldl')
 
-import Data.NumKell.Funk (HCatMaybes, Funk(..))
+import Data.NumKell.Funk (Funk(..))
+import Data.NumKell.HListUtil (HCatMaybes(..))
 
 -- I would happilly use HFalse and HTrue from HList
 -- but can't use their constructors

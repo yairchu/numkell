@@ -12,37 +12,20 @@
 -- * Can combine with other Funks with broadcasted axes
 
 module Data.NumKell.Funk
-  ( FLift2Shape, HCatMaybes
+  ( FLift2Shape
   , FunkFuncC(..)
   , Funk(..)
-  , (<~*>), funkSize, hCatMaybes, liftF2
+  , (<~*>), funkSize, liftF2
   ) where
 
 import Data.HList (HCons(..), HJust(..), HNil(..), HNothing(..))
 
--- | HCatMaybes transforms an HList
--- (HJust a :*: HNothing :*: HJust b :*: ...)
--- to an HList
--- (a :*: b :*: ...)
-class HCatMaybesC i where
-  type HCatMaybes i
-  hCatMaybes :: i -> HCatMaybes i
-
-instance HCatMaybesC HNil where
-  type HCatMaybes HNil = HNil
-  hCatMaybes = id
-
-instance HCatMaybesC as => HCatMaybesC (HCons HNothing as) where
-  type HCatMaybes (HCons HNothing as) = HCatMaybes as
-  hCatMaybes (HCons _ xs) = hCatMaybes xs
-
-instance HCatMaybesC as => HCatMaybesC (HCons (HJust a) as) where
-  type HCatMaybes (HCons (HJust a) as) = HCons a (HCatMaybes as)
-  hCatMaybes (HCons (HJust x) xs) = HCons x (hCatMaybes xs)
+import Data.NumKell.HListUtil (HCatMaybesC(..))
 
 data Funk i e = Funk
   { fSize :: i
-  -- fIndex similar to []'s genericIndex
+  -- can't use fVal instead because then
+  -- Functor's fmap could not be implemented.
   , fIndex :: HCatMaybes i -> e
   }
 

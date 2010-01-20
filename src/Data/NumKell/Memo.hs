@@ -8,7 +8,8 @@ import Control.Applicative ((<$>), (<*>))
 import Data.Array (Ix, (!), listArray)
 import Data.HList (HCons(..), HJust(..), HNil(..))
 
-import Data.NumKell.Funk (HCatMaybes, Funk(..))
+import Data.NumKell.Funk (Funk(..))
+import Data.NumKell.HListUtil (HCatMaybesC(..))
 
 data FMemoIdxFuncs i = FMemoIdxFuncs
   { fMemoArrIdx :: HCatMaybes i -> FMemoArrIdx i

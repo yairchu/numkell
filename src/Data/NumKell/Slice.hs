@@ -8,7 +8,8 @@ module Data.NumKell.Slice
 
 import Data.HList (HCons(..), HJust(..), HNil(..), HNothing(..))
 
-import Data.NumKell.Funk (HCatMaybes, Funk(..))
+import Data.NumKell.Funk (Funk(..))
+import Data.NumKell.HListUtil (HCatMaybesC(..))
 
 -- SAll vs (SRange 0 Nothing):
 -- * SAll does not perform computations on indices
