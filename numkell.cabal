@@ -16,7 +16,6 @@ Library
   Exposed-modules:     Data.NumKell
                        Data.NumKell.Aliases
                        Data.NumKell.Funk
-                       Data.NumKell.HListUtil
                        Data.NumKell.Memo
                        Data.NumKell.Show
                        Data.NumKell.Slice

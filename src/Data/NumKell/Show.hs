@@ -7,7 +7,7 @@
 module Data.NumKell.Show () where
 
 import Data.HList
-  ( HCons(..), HJust(..), HLength, HNil(..)
+  ( HCons(..), HHead(..), HLength, HNil(..)
   , HSucc, HZero
   )
 import Data.List (transpose)
@@ -60,13 +60,13 @@ instance Show e => ShowFunk HZero (Funk HNil e) where
 
 -- show for 1D arrays
 instance (Typeable ia, Integral ia, Show e)
-  => ShowFunk (HSucc HZero) (Funk (HCons (HJust ia) HNil) e) where
+  => ShowFunk (HSucc HZero) (Funk (HCons ia HNil) e) where
   showFunk _ arr =
     fmtTable [ [ cell x y
     | x <- HeadA : axisIdxs s ]
     | y <- [HeadA, Vals ()] ]
     where
-      HCons (HJust s) HNil = fSize arr
+      s = hHead $ funkSize arr
       cell HeadA HeadA = shortType s ++ ":"
       cell (Vals i) HeadA = show (fromIntegral i :: Int)
       cell (Vals i) (Vals ()) = show (fVal arr i)
@@ -76,13 +76,13 @@ instance (Typeable ia, Integral ia, Show e)
 -- show for 2D arrays
 instance (Typeable ia, Typeable ib, Integral ia, Integral ib, Show e)
   => ShowFunk (HSucc (HSucc HZero))
-     (Funk (HCons (HJust ia) (HCons (HJust ib) HNil)) e) where
+     (Funk (HCons ia (HCons ib HNil)) e) where
   showFunk _ arr =
     fmtTable [ [ cell x y
     | x <- HeadA : HeadB : axisIdxs sb ]
     | y <- HeadA : HeadB : axisIdxs sa ]
     where
-      HCons (HJust sa) (HCons (HJust sb) HNil) = fSize arr
+      HCons sa (HCons sb HNil) = funkSize arr
       cell HeadA HeadB = shortType sa
       cell HeadB HeadA = shortType sb
       cell HeadA HeadA = ""
@@ -100,5 +100,5 @@ instance (Show i, Typeable e)
   => ShowFunk (HSucc (HSucc (HSucc c))) (Funk i e) where
   showFunk _ arr
     = "A Funk of " ++ shortType (undefined :: e)
-    ++ "s of size " ++ show (fSize arr)
+    ++ "s of size " ++ show (funkSize arr)
 

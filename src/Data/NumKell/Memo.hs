@@ -6,20 +6,19 @@ module Data.NumKell.Memo
 
 import Control.Applicative ((<$>), (<*>))
 import Data.Array (Ix, (!), listArray)
-import Data.HList (HCons(..), HJust(..), HNil(..))
+import Data.HList (HCons(..), HNil(..))
 
 import Data.NumKell.Funk (Funk(..))
-import Data.NumKell.HListUtil (HCatMaybesC(..))
 
 data FMemoIdxFuncs i = FMemoIdxFuncs
-  { fMemoArrIdx :: HCatMaybes i -> FMemoArrIdx i
+  { fMemoArrIdx :: i -> FMemoArrIdx i
   , fMemoArrBounds :: i -> (FMemoArrIdx i, FMemoArrIdx i)
-  , fAllIdxs :: i -> [HCatMaybes i]
+  , fAllIdxs :: i -> [i]
   }
 
 type family FFromListType i a
 type instance FFromListType HNil a = a
-type instance FFromListType (HCons (HJust a) as) b
+type instance FFromListType (HCons a as) b
   = [FFromListType as b]
 
 class FMemoIdx i where
@@ -30,21 +29,21 @@ class FMemoIdx i where
 fMemo :: (FMemoIdx i, Ix (FMemoArrIdx i)) => Funk i e -> Funk i e
 fMemo funk =
   Funk
-  { fSize = fSize funk
-  , fIndex = (arr !) . fMemoArrIdx tbl
+  { funkSize = funkSize funk
+  , funkIndex = (arr !) . fMemoArrIdx tbl
   }
   where
     tbl = fMemoIdxFuncs
     arr
-      = listArray (fMemoArrBounds tbl (fSize funk))
-      . map (fIndex funk) . fAllIdxs tbl . fSize $ funk
+      = listArray (fMemoArrBounds tbl (funkSize funk))
+      . map (funkIndex funk) . fAllIdxs tbl . funkSize $ funk
 
 fFromList :: (FMemoIdx i, Ix (FMemoArrIdx i))
   => FFromListType i e -> Funk i e
 fFromList lst =
   Funk
-  { fSize = sz
-  , fIndex = (arr !) . fMemoArrIdx tbl
+  { funkSize = sz
+  , funkIndex = (arr !) . fMemoArrIdx tbl
   }
   where
     tbl = fMemoIdxFuncs
@@ -57,24 +56,25 @@ instance FMemoIdx HNil where
   fFromListArgs x = (HNil, [x])
 
 instance (FMemoIdx as, Integral a)
-  => FMemoIdx (HCons (HJust a) as) where
-  type FMemoArrIdx (HCons (HJust a) as)
+  => FMemoIdx (HCons a as) where
+  type FMemoArrIdx (HCons a as)
     = (Int, FMemoArrIdx as)
   fMemoIdxFuncs =
     FMemoIdxFuncs ix bnds allIdx
     where
       tbl = fMemoIdxFuncs
       ix (HCons x xs) = (fromIntegral x, fMemoArrIdx tbl xs)
-      bnds (HCons (HJust x) xs) =
+      bnds (HCons x xs) =
         ((0, inStart), (fromIntegral x - 1, inEnd))
         where
           (inStart, inEnd) = fMemoArrBounds tbl xs
-      allIdx (HCons (HJust x) xs) =
+      allIdx (HCons x xs) =
         HCons <$> [0 .. fromIntegral x - 1] <*> fAllIdxs tbl xs
   fFromListArgs lst =
     ( HCons
-      ((HJust . fromIntegral . length) lst)
+      ((fromIntegral . length) lst)
       ((fst . head) elemArgs)
     , elemArgs >>= snd)
     where
       elemArgs = map fFromListArgs lst
+
